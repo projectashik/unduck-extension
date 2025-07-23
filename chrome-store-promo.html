@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unduck Extension - Chrome Store Promo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            width: 1280px;
+            height: 800px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 60px 80px;
+            position: relative;
+        }
+        
+        .left-section {
+            flex: 1;
+            color: white;
+            z-index: 2;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .logo-icon {
+            width: 80px;
+            height: 80px;
+            background: #4285f4;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            font-weight: bold;
+            color: white;
+            margin-right: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        
+        .logo-text {
+            font-size: 64px;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .tagline {
+            font-size: 28px;
+            margin-bottom: 40px;
+            opacity: 0.95;
+            font-weight: 300;
+            line-height: 1.4;
+        }
+        
+        .features {
+            list-style: none;
+            margin-bottom: 40px;
+        }
+        
+        .features li {
+            font-size: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            opacity: 0.9;
+        }
+        
+        .features li::before {
+            content: "⚡";
+            margin-right: 12px;
+            font-size: 24px;
+        }
+        
+        .bang-examples {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .bang-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #fff;
+        }
+        
+        .bang-example {
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: #e8f4fd;
+        }
+        
+        .bang-command {
+            color: #ffd700;
+            font-weight: bold;
+        }
+        
+        .right-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .browser-mockup {
+            width: 500px;
+            height: 320px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .browser-header {
+            height: 40px;
+            background: #f1f3f4;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            border-bottom: 1px solid #dadce0;
+        }
+        
+        .browser-dots {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        
+        .dot.red { background: #ff5f57; }
+        .dot.yellow { background: #ffbd2e; }
+        .dot.green { background: #28ca42; }
+        
+        .address-bar {
+            flex: 1;
+            margin-left: 20px;
+            height: 28px;
+            background: white;
+            border: 1px solid #dadce0;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            font-size: 14px;
+            color: #333;
+        }
+        
+        .browser-content {
+            padding: 30px;
+            height: calc(100% - 40px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .search-demo {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        
+        .search-input {
+            width: 400px;
+            height: 50px;
+            border: 2px solid #4285f4;
+            border-radius: 25px;
+            padding: 0 20px;
+            font-size: 18px;
+            margin-bottom: 20px;
+            outline: none;
+        }
+        
+        .result-preview {
+            font-size: 14px;
+            color: #666;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            width: 100%;
+        }
+        
+        .floating-elements {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        
+        .floating-bang {
+            position: absolute;
+            color: rgba(255,255,255,0.1);
+            font-size: 24px;
+            font-weight: bold;
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+        }
+        
+        .ai-badge {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="left-section">
+            <div class="logo">
+                <div class="logo-icon">U</div>
+                <div class="logo-text">Unduck</div>
+            </div>
+            
+            <div class="tagline">
+                Lightning-fast DuckDuckGo bang redirects<br>
+                One-click setup for any browser
+            </div>
+            
+            <ul class="features">
+                <li>Instant search engine setup</li>
+                <li>Works across all Chromium browsers</li>
+                <li>No data collection or tracking</li>
+                <li>Perfect for developers & power users</li>
+            </ul>
+            
+            <div class="bang-examples">
+                <div class="bang-title">🚀 Bang Command Examples:</div>
+                <div class="bang-example"><span class="bang-command">!g</span> cats → Google search</div>
+                <div class="bang-example"><span class="bang-command">!w</span> wikipedia → Wikipedia</div>
+                <div class="bang-example"><span class="bang-command">!yt</span> music → YouTube</div>
+                <div class="bang-example"><span class="bang-command">!gh</span> javascript → GitHub</div>
+            </div>
+        </div>
+        
+        <div class="right-section">
+            <div class="browser-mockup">
+                <div class="browser-header">
+                    <div class="browser-dots">
+                        <div class="dot red"></div>
+                        <div class="dot yellow"></div>
+                        <div class="dot green"></div>
+                    </div>
+                    <div class="address-bar">!g unduck extension</div>
+                </div>
+                <div class="browser-content">
+                    <div class="search-demo">Type any bang command</div>
+                    <input type="text" class="search-input" value="!yt funny cats" readonly>
+                    <div class="result-preview">
+                        ✨ Redirecting to YouTube search for "funny cats"<br>
+                        <small>Powered by Unduck - Fast client-side redirects</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="floating-elements">
+            <div class="floating-bang" style="top: 10%; left: 15%; animation-delay: 0s;">!g</div>
+            <div class="floating-bang" style="top: 20%; right: 20%; animation-delay: 1s;">!w</div>
+            <div class="floating-bang" style="bottom: 30%; left: 10%; animation-delay: 2s;">!yt</div>
+            <div class="floating-bang" style="bottom: 15%; right: 15%; animation-delay: 3s;">!gh</div>
+            <div class="floating-bang" style="top: 60%; left: 5%; animation-delay: 4s;">!so</div>
+            <div class="floating-bang" style="top: 40%; right: 5%; animation-delay: 5s;">!a</div>
+        </div>
+        
+        <div class="ai-badge">🤖 AI-Generated Extension</div>
+    </div>
+</body>
+</html>
