@@ -1,0 +1,145 @@
+name: Validate Extension
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Validate manifest.json
+      run: |
+        echo "Validating Chrome manifest..."
+        if ! jq empty manifest.json; then
+          echo "❌ manifest.json is not valid JSON"
+          exit 1
+        fi
+        echo "✅ manifest.json is valid JSON"
+        
+        # Check required fields
+        if ! jq -e '.manifest_version' manifest.json > /dev/null; then
+          echo "❌ manifest_version is missing"
+          exit 1
+        fi
+        
+        if ! jq -e '.name' manifest.json > /dev/null; then
+          echo "❌ name is missing"
+          exit 1
+        fi
+        
+        if ! jq -e '.version' manifest.json > /dev/null; then
+          echo "❌ version is missing"
+          exit 1
+        fi
+        
+        if ! jq -e '.chrome_settings_overrides.search_provider' manifest.json > /dev/null; then
+          echo "❌ search_provider configuration is missing"
+          exit 1
+        fi
+        
+        echo "✅ All required fields present in manifest.json"
+        
+    - name: Validate manifest-firefox.json
+      run: |
+        echo "Validating Firefox manifest..."
+        if ! jq empty manifest-firefox.json; then
+          echo "❌ manifest-firefox.json is not valid JSON"
+          exit 1
+        fi
+        echo "✅ manifest-firefox.json is valid JSON"
+        
+        # Check manifest version is 2 for Firefox
+        MANIFEST_VERSION=$(jq -r '.manifest_version' manifest-firefox.json)
+        if [ "$MANIFEST_VERSION" != "2" ]; then
+          echo "❌ Firefox manifest should use manifest_version 2, found: $MANIFEST_VERSION"
+          exit 1
+        fi
+        
+        echo "✅ Firefox manifest validation passed"
+        
+    - name: Check version consistency
+      run: |
+        CHROME_VERSION=$(jq -r '.version' manifest.json)
+        FIREFOX_VERSION=$(jq -r '.version' manifest-firefox.json)
+        
+        if [ "$CHROME_VERSION" != "$FIREFOX_VERSION" ]; then
+          echo "❌ Version mismatch: Chrome=$CHROME_VERSION, Firefox=$FIREFOX_VERSION"
+          exit 1
+        fi
+        
+        echo "✅ Versions are consistent: $CHROME_VERSION"
+        
+    - name: Validate HTML
+      run: |
+        echo "Validating popup.html..."
+        if ! grep -q "<!DOCTYPE html>" popup.html; then
+          echo "❌ popup.html missing DOCTYPE declaration"
+          exit 1
+        fi
+        
+        if ! grep -q "<html" popup.html; then
+          echo "❌ popup.html missing html tag"
+          exit 1
+        fi
+        
+        echo "✅ popup.html basic validation passed"
+        
+    - name: Check required files
+      run: |
+        echo "Checking required files..."
+        
+        REQUIRED_FILES=(
+          "manifest.json"
+          "manifest-firefox.json" 
+          "popup.html"
+          "icons/icon-16.png"
+          "icons/icon-32.png"
+          "icons/icon-48.png"
+          "icons/icon-128.png"
+        )
+        
+        for file in "${REQUIRED_FILES[@]}"; do
+          if [ ! -f "$file" ]; then
+            echo "❌ Required file missing: $file"
+            exit 1
+          fi
+          echo "✅ Found: $file"
+        done
+        
+    - name: Test build process
+      run: |
+        echo "Testing build process..."
+        chmod +x build.sh
+        ./build.sh
+        
+        # Check if build artifacts were created
+        if [ ! -f "build/unduck-extension-chrome.zip" ]; then
+          echo "❌ Chrome build failed"
+          exit 1
+        fi
+        
+        if [ ! -f "build/unduck-extension-firefox.zip" ]; then
+          echo "❌ Firefox build failed"
+          exit 1
+        fi
+        
+        echo "✅ Build process completed successfully"
+        
+    - name: Validate search URL
+      run: |
+        SEARCH_URL=$(jq -r '.chrome_settings_overrides.search_provider.search_url' manifest.json)
+        
+        if [[ ! "$SEARCH_URL" =~ ^https://unduck\.link\?q=\{searchTerms\}$ ]]; then
+          echo "❌ Invalid search URL: $SEARCH_URL"
+          echo "Expected: https://unduck.link?q={searchTerms}"
+          exit 1
+        fi
+        
+        echo "✅ Search URL is valid: $SEARCH_URL"

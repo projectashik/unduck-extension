@@ -1,0 +1,139 @@
+name: Build and Release Extension
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Node.js (for version management)
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Get version from manifest
+      id: get_version
+      run: |
+        VERSION=$(grep '"version"' manifest.json | sed 's/.*"version": "\(.*\)".*/\1/')
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Extension version: $VERSION"
+        
+    - name: Create build directory
+      run: mkdir -p build
+      
+    - name: Build Chrome/Chromium extension
+      run: |
+        mkdir -p build/chrome
+        cp manifest.json build/chrome/
+        cp popup.html build/chrome/
+        cp -r icons build/chrome/
+        
+    - name: Build Firefox extension
+      run: |
+        mkdir -p build/firefox
+        cp manifest-firefox.json build/firefox/manifest.json
+        cp popup.html build/firefox/
+        cp -r icons build/firefox/
+        
+    - name: Create ZIP packages
+      run: |
+        cd build/chrome
+        zip -r ../unduck-extension-chrome-v${{ steps.get_version.outputs.version }}.zip .
+        cd ../firefox
+        zip -r ../unduck-extension-firefox-v${{ steps.get_version.outputs.version }}.zip .
+        cd ../..
+        
+    - name: Upload Chrome build artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: unduck-extension-chrome-v${{ steps.get_version.outputs.version }}
+        path: build/unduck-extension-chrome-v${{ steps.get_version.outputs.version }}.zip
+        
+    - name: Upload Firefox build artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: unduck-extension-firefox-v${{ steps.get_version.outputs.version }}
+        path: build/unduck-extension-firefox-v${{ steps.get_version.outputs.version }}.zip
+        
+    - name: Check if tag exists
+      id: check_tag
+      run: |
+        if git rev-parse "v${{ steps.get_version.outputs.version }}" >/dev/null 2>&1; then
+          echo "tag_exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "tag_exists=false" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Create Release
+      if: github.ref == 'refs/heads/main' && steps.check_tag.outputs.tag_exists == 'false'
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ steps.get_version.outputs.version }}
+        release_name: Unduck Extension v${{ steps.get_version.outputs.version }}
+        body: |
+          ## Unduck Search Engine Extension v${{ steps.get_version.outputs.version }}
+          
+          A simple browser extension that sets [Unduck](https://unduck.link) as your default search engine for fast DuckDuckGo bang redirects.
+          
+          ### Installation Instructions
+          
+          #### Chrome, Edge, Opera, Vivaldi (Chromium-based browsers)
+          1. Download `unduck-extension-chrome-v${{ steps.get_version.outputs.version }}.zip`
+          2. Extract the ZIP file
+          3. Go to your browser's extensions page (`chrome://extensions/`, `edge://extensions/`, etc.)
+          4. Enable "Developer mode"
+          5. Click "Load unpacked" and select the extracted folder
+          6. For Vivaldi: Manually set Unduck as default in Settings → Search → Search Engines
+          
+          #### Firefox
+          1. Download `unduck-extension-firefox-v${{ steps.get_version.outputs.version }}.zip`
+          2. Extract the ZIP file
+          3. Go to `about:debugging` in Firefox
+          4. Click "This Firefox"
+          5. Click "Load Temporary Add-on"
+          6. Select the `manifest.json` file from the extracted folder
+          
+          ### What's New
+          - Cross-browser compatibility
+          - Fast DuckDuckGo bang redirects
+          - Simple installation process
+          - Vivaldi-specific instructions and settings button
+          
+          ### Files
+          - `unduck-extension-chrome-v${{ steps.get_version.outputs.version }}.zip` - For Chrome, Edge, Opera, Vivaldi
+          - `unduck-extension-firefox-v${{ steps.get_version.outputs.version }}.zip` - For Firefox
+        draft: false
+        prerelease: false
+        
+    - name: Upload Chrome Release Asset
+      if: github.ref == 'refs/heads/main' && steps.check_tag.outputs.tag_exists == 'false'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: build/unduck-extension-chrome-v${{ steps.get_version.outputs.version }}.zip
+        asset_name: unduck-extension-chrome-v${{ steps.get_version.outputs.version }}.zip
+        asset_content_type: application/zip
+        
+    - name: Upload Firefox Release Asset
+      if: github.ref == 'refs/heads/main' && steps.check_tag.outputs.tag_exists == 'false'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: build/unduck-extension-firefox-v${{ steps.get_version.outputs.version }}.zip
+        asset_name: unduck-extension-firefox-v${{ steps.get_version.outputs.version }}.zip
+        asset_content_type: application/zip

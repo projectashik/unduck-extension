@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unduck Search Engine</title>
+    <style>
+        body {
+            width: 300px;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            background: #f8f9fa;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .info {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border: 1px solid #e1e5e9;
+        }
+        
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .status-icon {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #28a745;
+        }
+        
+        .status-text {
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .description {
+            color: #666;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        
+        .link {
+            color: #007bff;
+            text-decoration: none;
+        }
+        
+        .link:hover {
+            text-decoration: underline;
+        }
+        
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #999;
+        }
+
+        .button {
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-size: 13px;
+            cursor: pointer;
+            margin-top: 12px;
+            width: 100%;
+        }
+
+        .button:hover {
+            background: #0056b3;
+        }
+
+        code {
+            background: #f1f3f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 12px;
+            color: #d73a49;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">Unduck</div>
+        <div class="subtitle">Fast DuckDuckGo Bang Redirects</div>
+    </div>
+    
+    <div class="info">
+        <div class="status">
+            <div class="status-icon"></div>
+            <div class="status-text">Extension Active</div>
+        </div>
+        <div class="description">
+            <span id="status-text">Unduck has been added to your search engines list.</span>
+            <br><br>
+            <strong>For Vivaldi users:</strong> Extensions cannot set default search engines in Vivaldi. Please manually add Unduck using Settings → Search → Search Engines with URL: <code>https://unduck.link?q=%s</code>
+            <br><br>
+            <strong>Test it:</strong> Try searching <code>!w cats</code> or <code>!g hello</code>
+            <br><br>
+            Visit <a href="https://unduck.link" class="link" target="_blank">unduck.link</a> to learn more about bang commands.
+        </div>
+        <button class="button" onclick="openSearchSettings()">Open Search Settings</button>
+    </div>
+    
+    <div class="footer">
+        Version 1.0.1
+    </div>
+
+    <script>
+        function openSearchSettings() {
+            // Try to detect browser and open appropriate settings page
+            const userAgent = navigator.userAgent;
+            let settingsUrl = '';
+
+            if (userAgent.includes('Vivaldi')) {
+                settingsUrl = 'vivaldi://settings/search/';
+            } else if (userAgent.includes('Chrome')) {
+                settingsUrl = 'chrome://settings/searchEngines';
+            } else if (userAgent.includes('Edge')) {
+                settingsUrl = 'edge://settings/searchEngines';
+            } else if (userAgent.includes('Opera')) {
+                settingsUrl = 'opera://settings/searchEngines';
+            } else {
+                // Fallback - try Chrome settings
+                settingsUrl = 'chrome://settings/searchEngines';
+            }
+
+            chrome.tabs.create({ url: settingsUrl });
+        }
+    </script>
+</body>
+</html>

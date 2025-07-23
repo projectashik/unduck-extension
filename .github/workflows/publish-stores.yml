@@ -1,0 +1,97 @@
+# Optional workflow for publishing to browser stores
+# Requires store credentials to be set up as repository secrets
+
+name: Publish to Browser Stores
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag to publish'
+        required: true
+        type: string
+
+jobs:
+  publish-chrome:
+    runs-on: ubuntu-latest
+    if: false  # Disabled by default - enable when store credentials are available
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download release assets
+      if: github.event_name == 'release'
+      run: |
+        TAG_NAME=${{ github.event.release.tag_name }}
+        wget -O chrome-extension.zip "https://github.com/${{ github.repository }}/releases/download/${TAG_NAME}/unduck-extension-chrome-${TAG_NAME}.zip"
+        
+    - name: Download release assets (manual)
+      if: github.event_name == 'workflow_dispatch'
+      run: |
+        TAG_NAME=${{ github.event.inputs.release_tag }}
+        wget -O chrome-extension.zip "https://github.com/${{ github.repository }}/releases/download/${TAG_NAME}/unduck-extension-chrome-${TAG_NAME}.zip"
+        
+    - name: Publish to Chrome Web Store
+      uses: mnao305/chrome-extension-upload@v4.0.1
+      with:
+        file-path: chrome-extension.zip
+        extension-id: ${{ secrets.CHROME_EXTENSION_ID }}
+        client-id: ${{ secrets.CHROME_CLIENT_ID }}
+        client-secret: ${{ secrets.CHROME_CLIENT_SECRET }}
+        refresh-token: ${{ secrets.CHROME_REFRESH_TOKEN }}
+        publish: true
+
+  publish-firefox:
+    runs-on: ubuntu-latest
+    if: false  # Disabled by default - enable when store credentials are available
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download release assets
+      if: github.event_name == 'release'
+      run: |
+        TAG_NAME=${{ github.event.release.tag_name }}
+        wget -O firefox-extension.zip "https://github.com/${{ github.repository }}/releases/download/${TAG_NAME}/unduck-extension-firefox-${TAG_NAME}.zip"
+        
+    - name: Download release assets (manual)
+      if: github.event_name == 'workflow_dispatch'
+      run: |
+        TAG_NAME=${{ github.event.inputs.release_tag }}
+        wget -O firefox-extension.zip "https://github.com/${{ github.repository }}/releases/download/${TAG_NAME}/unduck-extension-firefox-${TAG_NAME}.zip"
+        
+    - name: Publish to Firefox Add-ons
+      uses: trmcnvn/firefox-addon@v1
+      with:
+        uuid: ${{ secrets.FIREFOX_EXTENSION_UUID }}
+        xpi: firefox-extension.zip
+        manifest: manifest-firefox.json
+        api-key: ${{ secrets.FIREFOX_API_KEY }}
+        api-secret: ${{ secrets.FIREFOX_API_SECRET }}
+
+# Instructions for setting up store publishing:
+#
+# Chrome Web Store:
+# 1. Create a Google Cloud project and enable Chrome Web Store API
+# 2. Create OAuth2 credentials and get client_id, client_secret, refresh_token
+# 3. Upload extension manually once to get extension_id
+# 4. Set repository secrets:
+#    - CHROME_EXTENSION_ID
+#    - CHROME_CLIENT_ID  
+#    - CHROME_CLIENT_SECRET
+#    - CHROME_REFRESH_TOKEN
+#
+# Firefox Add-ons:
+# 1. Create account at https://addons.mozilla.org/developers/
+# 2. Generate API credentials
+# 3. Upload extension manually once to get UUID
+# 4. Set repository secrets:
+#    - FIREFOX_EXTENSION_UUID
+#    - FIREFOX_API_KEY
+#    - FIREFOX_API_SECRET
+#
+# Enable workflows by changing "if: false" to "if: true" above

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Icon Generator</title>
+</head>
+<body>
+    <canvas id="canvas" style="border: 1px solid #ccc;"></canvas>
+    <br><br>
+    <button onclick="generateIcons()">Generate Icons</button>
+    <div id="downloads"></div>
+
+    <script>
+        function generateIcons() {
+            const sizes = [16, 32, 48, 128];
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            const downloads = document.getElementById('downloads');
+            downloads.innerHTML = '';
+
+            sizes.forEach(size => {
+                canvas.width = size;
+                canvas.height = size;
+                
+                // Clear canvas
+                ctx.clearRect(0, 0, size, size);
+                
+                // Draw background circle
+                ctx.fillStyle = '#4285f4';
+                ctx.beginPath();
+                ctx.arc(size/2, size/2, size/2 - 2, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // Draw "U" letter
+                ctx.fillStyle = 'white';
+                ctx.font = `bold ${size * 0.6}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('U', size/2, size/2);
+                
+                // Create download link
+                canvas.toBlob(blob => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `icon-${size}.png`;
+                    a.textContent = `Download ${size}x${size} icon`;
+                    a.style.display = 'block';
+                    a.style.margin = '5px 0';
+                    downloads.appendChild(a);
+                });
+            });
+        }
+    </script>
+</body>
+</html>

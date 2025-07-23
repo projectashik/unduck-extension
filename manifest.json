@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "Unduck Search Engine",
+  "version": "1.0.1",
+  "description": "Set Unduck as your default search engine for fast DuckDuckGo bang redirects",
+  "permissions": ["tabs"],
+  "host_permissions": [
+    "https://unduck.link/*"
+  ],
+  "chrome_settings_overrides": {
+    "search_provider": {
+      "name": "Unduck",
+      "keyword": "unduck",
+      "search_url": "https://unduck.link?q={searchTerms}",
+      "favicon_url": "https://unduck.link/favicon.ico",
+      "encoding": "UTF-8",
+      "is_default": true
+    }
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Unduck Search Engine"
+  }
+}
