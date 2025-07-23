@@ -67,23 +67,49 @@ jobs:
         name: unduck-extension-firefox-v${{ steps.get_version.outputs.version }}
         path: build/unduck-extension-firefox-v${{ steps.get_version.outputs.version }}.zip
         
-    - name: Check if tag exists
+    - name: Check if tag exists and find next available version
       id: check_tag
       run: |
-        if git rev-parse "v${{ steps.get_version.outputs.version }}" >/dev/null 2>&1; then
+        BASE_VERSION="${{ steps.get_version.outputs.version }}"
+        CURRENT_VERSION="$BASE_VERSION"
+        COUNTER=0
+
+        # Check if the base version tag exists
+        if git rev-parse "v$BASE_VERSION" >/dev/null 2>&1; then
+          echo "Tag v$BASE_VERSION already exists, finding next available version..."
+
+          # Parse version parts
+          IFS='.' read -ra VERSION_PARTS <<< "$BASE_VERSION"
+          MAJOR=${VERSION_PARTS[0]}
+          MINOR=${VERSION_PARTS[1]}
+          PATCH=${VERSION_PARTS[2]}
+
+          # Increment patch version until we find an available tag
+          while git rev-parse "v$CURRENT_VERSION" >/dev/null 2>&1; do
+            PATCH=$((PATCH + 1))
+            CURRENT_VERSION="$MAJOR.$MINOR.$PATCH"
+          done
+
           echo "tag_exists=true" >> $GITHUB_OUTPUT
+          echo "next_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "Next available version: $CURRENT_VERSION"
         else
           echo "tag_exists=false" >> $GITHUB_OUTPUT
+          echo "next_version=$BASE_VERSION" >> $GITHUB_OUTPUT
+          echo "Using manifest version: $BASE_VERSION"
         fi
-        
+
     - name: Create Release
-      if: github.ref == 'refs/heads/main' && steps.check_tag.outputs.tag_exists == 'false'
+      if: github.ref == 'refs/heads/main'
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        gh release create "v${{ steps.get_version.outputs.version }}" \
-          --title "Unduck Extension v${{ steps.get_version.outputs.version }}" \
-          --notes "## Unduck Search Engine Extension v${{ steps.get_version.outputs.version }}
+        RELEASE_VERSION="${{ steps.check_tag.outputs.next_version }}"
+        echo "Creating release for version: $RELEASE_VERSION"
+
+        gh release create "v$RELEASE_VERSION" \
+          --title "Unduck Extension v$RELEASE_VERSION" \
+          --notes "## Unduck Search Engine Extension v$RELEASE_VERSION
 
         A simple browser extension that sets [Unduck](https://unduck.link) as your default search engine for fast DuckDuckGo bang redirects.
 

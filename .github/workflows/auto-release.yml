@@ -1,0 +1,145 @@
+name: Auto Release with Version Conflict Resolution
+
+on:
+  workflow_dispatch:
+    inputs:
+      force_version:
+        description: 'Force specific version (optional)'
+        required: false
+        type: string
+      release_notes:
+        description: 'Custom release notes (optional)'
+        required: false
+        type: string
+
+jobs:
+  auto-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: read
+      pull-requests: read
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Get version from manifest or use forced version
+      id: get_version
+      run: |
+        if [ -n "${{ github.event.inputs.force_version }}" ]; then
+          VERSION="${{ github.event.inputs.force_version }}"
+          echo "Using forced version: $VERSION"
+        else
+          VERSION=$(grep '"version"' manifest.json | sed 's/.*"version": "\(.*\)".*/\1/')
+          echo "Using manifest version: $VERSION"
+        fi
+        echo "base_version=$VERSION" >> $GITHUB_OUTPUT
+        
+    - name: Find next available version
+      id: next_version
+      run: |
+        BASE_VERSION="${{ steps.get_version.outputs.base_version }}"
+        
+        # Parse version parts
+        IFS='.' read -ra VERSION_PARTS <<< "$BASE_VERSION"
+        MAJOR=${VERSION_PARTS[0]}
+        MINOR=${VERSION_PARTS[1]}
+        PATCH=${VERSION_PARTS[2]}
+        
+        CURRENT_VERSION="$BASE_VERSION"
+        
+        # Check if tag exists and increment until we find available version
+        while git rev-parse "v$CURRENT_VERSION" >/dev/null 2>&1; do
+          echo "Tag v$CURRENT_VERSION already exists, incrementing..."
+          PATCH=$((PATCH + 1))
+          CURRENT_VERSION="$MAJOR.$MINOR.$PATCH"
+        done
+        
+        echo "release_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+        echo "Final release version: $CURRENT_VERSION"
+        
+    - name: Create build directory
+      run: mkdir -p build
+      
+    - name: Build Chrome/Chromium extension
+      run: |
+        mkdir -p build/chrome
+        cp manifest.json build/chrome/
+        cp popup.html build/chrome/
+        cp -r icons build/chrome/
+        
+    - name: Build Firefox extension
+      run: |
+        mkdir -p build/firefox
+        cp manifest-firefox.json build/firefox/manifest.json
+        cp popup.html build/firefox/
+        cp -r icons build/firefox/
+        
+    - name: Create ZIP packages
+      run: |
+        cd build/chrome
+        zip -r ../unduck-extension-chrome-v${{ steps.next_version.outputs.release_version }}.zip .
+        cd ../firefox
+        zip -r ../unduck-extension-firefox-v${{ steps.next_version.outputs.release_version }}.zip .
+        cd ../..
+        
+    - name: Generate release notes
+      id: release_notes
+      run: |
+        if [ -n "${{ github.event.inputs.release_notes }}" ]; then
+          NOTES="${{ github.event.inputs.release_notes }}"
+        else
+          NOTES="## Unduck Search Engine Extension v${{ steps.next_version.outputs.release_version }}
+
+        A simple browser extension that sets [Unduck](https://unduck.link) as your default search engine for fast DuckDuckGo bang redirects.
+
+        ### 🚀 Quick Installation
+
+        **For Chromium browsers (Chrome, Brave, Edge, Opera):**
+        1. Download \`unduck-extension-chrome-v${{ steps.next_version.outputs.release_version }}.zip\`
+        2. Extract the ZIP file
+        3. Go to your browser's extensions page (\`chrome://extensions/\`, etc.)
+        4. Enable \"Developer mode\"
+        5. Click \"Load unpacked\" and select the extracted folder
+
+        **For Firefox:**
+        1. Download \`unduck-extension-firefox-v${{ steps.next_version.outputs.release_version }}.zip\`
+        2. Go to \`about:debugging\` in Firefox
+        3. Click \"This Firefox\"
+        4. Click \"Load Temporary Add-on\"
+        5. Select the ZIP file directly
+
+        ### 🤖 AI-Generated Extension
+        This entire extension was created using AI assistance!
+
+        ### Credits
+        - [Unduck](https://unduck.link) created by [Theo (T3)](https://github.com/t3dotgg)
+        - Extension created to automate Unduck setup across multiple browsers"
+        fi
+        
+        # Save notes to file for multiline handling
+        echo "$NOTES" > release_notes.txt
+        
+    - name: Create Release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        RELEASE_VERSION="${{ steps.next_version.outputs.release_version }}"
+        echo "Creating release for version: $RELEASE_VERSION"
+        
+        gh release create "v$RELEASE_VERSION" \
+          --title "Unduck Extension v$RELEASE_VERSION" \
+          --notes-file release_notes.txt \
+          "build/unduck-extension-chrome-v$RELEASE_VERSION.zip" \
+          "build/unduck-extension-firefox-v$RELEASE_VERSION.zip"
+          
+    - name: Output release info
+      run: |
+        echo "✅ Successfully created release v${{ steps.next_version.outputs.release_version }}"
+        echo "🔗 Release URL: https://github.com/${{ github.repository }}/releases/tag/v${{ steps.next_version.outputs.release_version }}"
