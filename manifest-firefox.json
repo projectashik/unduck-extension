@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Unduck Search Engine",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "Set Unduck as your default search engine for fast DuckDuckGo bang redirects",
   "permissions": [],
   "chrome_settings_overrides": {
