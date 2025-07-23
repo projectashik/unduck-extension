@@ -74,66 +74,48 @@ jobs:
         
     - name: Create Release
       if: github.ref == 'refs/heads/main' && steps.check_tag.outputs.tag_exists == 'false'
-      id: create_release
-      uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: v${{ steps.get_version.outputs.version }}
-        release_name: Unduck Extension v${{ steps.get_version.outputs.version }}
-        body: |
-          ## Unduck Search Engine Extension v${{ steps.get_version.outputs.version }}
-          
-          A simple browser extension that sets [Unduck](https://unduck.link) as your default search engine for fast DuckDuckGo bang redirects.
-          
-          ### Installation Instructions
-          
-          #### Chrome, Edge, Opera, Vivaldi (Chromium-based browsers)
-          1. Download `unduck-extension-chrome-v${{ steps.get_version.outputs.version }}.zip`
-          2. Extract the ZIP file
-          3. Go to your browser's extensions page (`chrome://extensions/`, `edge://extensions/`, etc.)
-          4. Enable "Developer mode"
-          5. Click "Load unpacked" and select the extracted folder
-          6. For Vivaldi: Manually set Unduck as default in Settings → Search → Search Engines
-          
-          #### Firefox
-          1. Download `unduck-extension-firefox-v${{ steps.get_version.outputs.version }}.zip`
-          2. Extract the ZIP file
-          3. Go to `about:debugging` in Firefox
-          4. Click "This Firefox"
-          5. Click "Load Temporary Add-on"
-          6. Select the `manifest.json` file from the extracted folder
-          
-          ### What's New
-          - Cross-browser compatibility
-          - Fast DuckDuckGo bang redirects
-          - Simple installation process
-          - Vivaldi-specific instructions and settings button
-          
-          ### Files
-          - `unduck-extension-chrome-v${{ steps.get_version.outputs.version }}.zip` - For Chrome, Edge, Opera, Vivaldi
-          - `unduck-extension-firefox-v${{ steps.get_version.outputs.version }}.zip` - For Firefox
-        draft: false
-        prerelease: false
-        
-    - name: Upload Chrome Release Asset
-      if: github.ref == 'refs/heads/main' && steps.check_tag.outputs.tag_exists == 'false'
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: build/unduck-extension-chrome-v${{ steps.get_version.outputs.version }}.zip
-        asset_name: unduck-extension-chrome-v${{ steps.get_version.outputs.version }}.zip
-        asset_content_type: application/zip
-        
-    - name: Upload Firefox Release Asset
-      if: github.ref == 'refs/heads/main' && steps.check_tag.outputs.tag_exists == 'false'
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: build/unduck-extension-firefox-v${{ steps.get_version.outputs.version }}.zip
-        asset_name: unduck-extension-firefox-v${{ steps.get_version.outputs.version }}.zip
-        asset_content_type: application/zip
+      run: |
+        gh release create "v${{ steps.get_version.outputs.version }}" \
+          --title "Unduck Extension v${{ steps.get_version.outputs.version }}" \
+          --notes "## Unduck Search Engine Extension v${{ steps.get_version.outputs.version }}
+
+        A simple browser extension that sets [Unduck](https://unduck.link) as your default search engine for fast DuckDuckGo bang redirects.
+
+        ### 🚀 Quick Installation
+
+        **For Chromium browsers (Chrome, Brave, Edge, Opera):**
+        1. Download \`unduck-extension-chrome-v${{ steps.get_version.outputs.version }}.zip\`
+        2. Extract the ZIP file
+        3. Go to your browser's extensions page (\`chrome://extensions/\`, etc.)
+        4. Enable \"Developer mode\"
+        5. Click \"Load unpacked\" and select the extracted folder
+
+        **For Firefox:**
+        1. Download \`unduck-extension-firefox-v${{ steps.get_version.outputs.version }}.zip\`
+        2. Go to \`about:debugging\` in Firefox
+        3. Click \"This Firefox\"
+        4. Click \"Load Temporary Add-on\"
+        5. Select the ZIP file directly
+
+        **For Zen Browser:**
+        1. Download \`unduck-extension-firefox-v${{ steps.get_version.outputs.version }}.zip\`
+        2. Go to \`zen://debugging\`
+        3. Click \"This Zen\"
+        4. Click \"Load Temporary Add-on\"
+        5. Select the ZIP file directly
+
+        **For Vivaldi:**
+        Extensions cannot set default search engines in Vivaldi. Please manually add Unduck:
+        1. Go to \`vivaldi://settings/search/\`
+        2. Add search engine with URL: \`https://unduck.link?q=%s\`
+
+        ### 🤖 AI-Generated Extension
+        This entire extension was created using AI assistance!
+
+        ### Credits
+        - [Unduck](https://unduck.link) created by [Theo (T3)](https://github.com/t3dotgg)
+        - Extension created to automate Unduck setup across multiple browsers" \
+          "build/unduck-extension-chrome-v${{ steps.get_version.outputs.version }}.zip" \
+          "build/unduck-extension-firefox-v${{ steps.get_version.outputs.version }}.zip"
